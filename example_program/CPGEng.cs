@@ -32,7 +32,7 @@ namespace CPGEng {
 
 	public class Sprite {
 		public string ImagePath;
-		public int PosX, PosY = 0;
+		public int PosX = 0, PosY = 0;
 		public int SizeX, SizeY;
 
 		public Sprite(string img, int sx, int sy) {
