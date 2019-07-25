@@ -1,7 +1,7 @@
-﻿/*
- * Crispycat PixelGraphic Engine v1.0
+﻿﻿/*
+ * Crispycat PixelGraphic Engine v1.1
  * crispycat
- * 2019/07/09
+ * 2019/07/25
 */
 
 using System;
@@ -30,21 +30,64 @@ namespace CPGEng {
 		}
 	}
 
-	public class Sprite {
-		public string ImagePath;
-		public int PosX = 0, PosY = 0;
-		public int SizeX, SizeY;
+	public class CPGBitmapData {
+		public byte[] Data;
+		public int Stride, B, Width, Height;
+		public readonly string Path;
+		public CPGBitmapData(string path, int sx, int sy) {
+			Path = path;
+			Width = sx;
+			Height = sy;
+		}
 
-		public Sprite(string img, int sx, int sy) {
-			ImagePath = img;
-			SizeX = sx;
-			SizeY = sy;
+		public void Load() {
+			if (File.Exists(Path)) {
+				BitmapImage img = new BitmapImage();
+				img.BeginInit();
+				img.UriSource = new Uri(Path);
+				img.DecodePixelWidth = Width;
+				img.DecodePixelHeight = Height;
+				img.EndInit();
+
+				B = 4;
+				Stride = Width * B;
+				Data = new byte[Stride * Height];
+				img.CopyPixels(Data, Stride, 0);
+			} else {
+				B = 4;
+				Stride = Width * B;
+				Data = new byte[Stride * Height];
+			}
+		}
+
+		public void Resize(int nw, int nh, bool reload = true) {
+			Width = nw;
+			Height = nh;
+			if (reload) Load();
+		}
+	}
+
+	public class Sprite {
+		public CPGBitmapData Image;
+		public int PosX, PosY, SizeX, SizeY;
+
+		public Sprite(CPGBitmapData img, int px = 0, int py = 0) {
+			Image = img;
+			PosX = px;
+			PosY = py;
+			SizeX = img.Width;
+			SizeY = img.Height;
+		}
+
+		public CPGBitmapData Resize(int nw, int nh) {
+			Image.Resize(nw, nh);
+			return Image;
 		}
 	}
 
 	public class View {
 		// Initialization
-		private byte[] Buffer;
+		public byte[] Buffer;
 		public int Width, Height, Stride, Density;
 		private int ColorBytes = 3;
 		private Sprite[] Sprites = new Sprite[0];
@@ -60,6 +103,11 @@ namespace CPGEng {
 		// Buffer manipulation functions
 		public int BufferLocation(int x, int y) {
 			return x * ColorBytes + y * Stride;
+		}
+
+		public byte ReadBuffer(int loc) {
+			if (loc < Buffer.Length && loc > 0) return Buffer[loc];
+			return new byte();
 		}
 
 		public void WriteBuffer(int loc, byte val) {
@@ -92,21 +140,26 @@ namespace CPGEng {
 			}
 		}
 
-		// Update function
-		public void Update(object obj) {
-			// Sprites? Do this:
+		// Output functions
+		public BitmapSource Output() {
 			if (Sprites.Length > 0) {
 				byte[] UnspritedBuff = Buffer.Clone() as byte[];
-				foreach (Sprite sprite in Sprites) {
-					DrawBitmap(sprite.PosX, sprite.PosY, sprite.PosX + sprite.SizeX, sprite.PosY + sprite.SizeY, sprite.ImagePath);
-				}
+				foreach (Sprite sprite in Sprites) DrawBitmap(sprite.PosX, sprite.PosY, sprite.Image);
+				BitmapSource s = BitmapSource.Create(Width, Height, Density, Density, PixelFormats.Bgr24, null, Buffer, Stride);
+				Buffer = UnspritedBuff.Clone() as byte[];
+				return s;
+			}
+			return BitmapSource.Create(Width, Height, Density, Density, PixelFormats.Bgr24, null, Buffer, Stride);
+		}
+		public void Update(object obj) {
+			if (Sprites.Length > 0) {
+				byte[] UnspritedBuff = Buffer.Clone() as byte[];
+				foreach (Sprite sprite in Sprites) DrawBitmap(sprite.PosX, sprite.PosY, sprite.Image);
 				(obj as Image).Source = BitmapSource.Create(Width, Height, Density, Density, PixelFormats.Bgr24, null, Buffer, Stride);
-				ClearSprites();
 				Buffer = UnspritedBuff.Clone() as byte[];
 				return;
 			}
 			
-			// No sprites? Just do this:
 			(obj as Image).Source = BitmapSource.Create(Width, Height, Density, Density, PixelFormats.Bgr24, null, Buffer, Stride);
 		}
 
@@ -229,27 +282,13 @@ namespace CPGEng {
 			}
 		}
 
-		public void DrawBitmap(int x1, int y1, int x2, int y2, string imgp) {
-			if (!File.Exists(imgp)) return;
-
-			BitmapImage img = new BitmapImage();
-			img.BeginInit();
-			img.UriSource = new Uri(Environment.CurrentDirectory + "\\" + imgp);
-			img.DecodePixelWidth = x2 - x1;
-			img.DecodePixelHeight = y2 - y1;
-			img.EndInit();
-
-			int imgcolorbytes = 4;
-			int stride = (x2 - x1) * imgcolorbytes;
-			byte[] pixels = new byte[stride * (y2 - y1)];
-
-			img.CopyPixels(pixels, stride, 0);
-
-			for (int i = 0; i < y2 - y1; i++) {
-				for (int j = 0; j < x2 - x1; j++) {
-					WriteBuffer(BufferLocation(j + x1, i + y1), pixels[i * stride + j * imgcolorbytes]);
-					WriteBuffer(BufferLocation(j + x1, i + y1) + 1, pixels[i * stride + j * imgcolorbytes + 1]);
-					WriteBuffer(BufferLocation(j + x1, i + y1) + 2, pixels[i * stride + j * imgcolorbytes + 2]);
+		public void DrawBitmap(int x, int y, CPGBitmapData data) {
+			if (data.Data == null) return;
+			for (int i = 0; i < data.Height; i++) {
+				for (int j = 0; j < data.Width; j++) {
+					WriteBuffer(BufferLocation(j + x, i + y), data.Data[i * data.Stride + j * data.B]);
+					WriteBuffer(BufferLocation(j + x, i + y) + 1, data.Data[i * data.Stride + j * data.B + 1]);
+					WriteBuffer(BufferLocation(j + x, i + y) + 2, data.Data[i * data.Stride + j * data.B + 2]);
 				}
 			}
 		}
