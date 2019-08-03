@@ -5,6 +5,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -297,6 +298,12 @@ namespace CPGEng {
 		public void AddSprite(Sprite sprite) {
 			Array.Resize(ref Sprites, Sprites.Length + 1);
 			Sprites[Sprites.Length - 1] = sprite;
+		}
+
+		public void RemoveSprite(Sprite sprite) {
+			List<Sprite> _ = new List<Sprite>(Sprites);
+			_.Remove(sprite);
+			Sprites = _.ToArray();
 		}
 
 		public void ClearSprites() {
