@@ -1,7 +1,7 @@
 ﻿﻿/*
- * Crispycat PixelGraphic Engine v1.1
+ * Crispycat PixelGraphic Engine v1.3
  * crispycat
- * 2019/07/25
+ * 2019/08/25
 */
 
 using System;
@@ -165,7 +165,7 @@ namespace CPGEng {
 		}
 
 		// Drawing functions
-		public void DrawPoint(int x, int y, ColorInt c) { SetPixel(x, y, c); }
+		public Action<int, int, ColorInt> DrawPoint => SetPixel;
 
 		public void DrawLine(int x1, int y1, int x2, int y2, ColorInt c) {
 			int w = x2 - x1;
@@ -198,15 +198,21 @@ namespace CPGEng {
 		}
 
 		public void DrawRectangle(int x1, int y1, int x2, int y2, ColorInt c) {
-			DrawLine(x1, y1, x2, y1, c);
-			DrawLine(x2, y1, x2, y2, c);
-			DrawLine(x1, y2, x2, y2, c);
-			DrawLine(x1, y1, x1, y2, c);
+			if (x1 > x2) { int _ = x1; x1 = x2; x2 = _; }
+			if (y1 > y2) { int _ = y1; y1 = y2; y2 = _; }
+
+			for (int i = x1; i <= x2; i++) SetPixel(i, y1, c);
+			for (int i = x1; i <= x2; i++) SetPixel(i, y2, c);
+			for (int i = y1; i <= y2; i++) SetPixel(x1, i, c);
+			for (int i = y1; i <= y2; i++) SetPixel(x2, i, c);
 		}
 
 		public void DrawFilledRectangle(int x1, int y1, int x2, int y2, ColorInt c) {
-			for (int x = x1; x < x2; x++) {
-				for (int y = y1; y < y2; y++) {
+			if (x1 > x2) { int _ = x1; x1 = x2; x2 = _; }
+			if (y1 > y2) { int _ = y1; y1 = y2; y2 = _; }
+
+			for (int x = x1; x <= x2; x++) {
+				for (int y = y1; y <= y2; y++) {
 					SetPixel(x, y, c);
 				}
 			}
@@ -238,48 +244,73 @@ namespace CPGEng {
 			}
 		}
 
-		private int[] GetEllipsePoints(int rw, int rh, int ox, int oy, double t) {
-			int[] loc = new int[2];
-			loc[0] = (int)(ox + rw * Math.Cos(t * Math.PI / 180));
-			loc[1] = (int)(oy + rh * Math.Sin(t * Math.PI / 180));
-			return loc;
+		public void DrawEllipse(int x1, int y1, int x2, int y2, ColorInt c, double p = 3) {
+			int ox = Math.Abs(x2 + x1) / 2;
+			int sx = Math.Abs(x2 - x1) / 2;
+			int oy = Math.Abs(y2 + y1) / 2;
+			int sy = Math.Abs(y2 - y1) / 2;
+
+			for (double i = 0; i < 360; i += 1 / p)
+				SetPixel((int)Math.Floor(Math.Cos(i) * sx + ox), (int)Math.Floor(Math.Sin(i) * sy + oy), c);
 		}
 
-		public void DrawEllipse(int x1, int y1, int x2, int y2, ColorInt c) {
-			int ox = (x2 + x1) / 2;
-			int sx = (x2 - x1) / 2;
-			int oy = (y2 + y1) / 2;
-			int sy = (y2 - y1) / 2;
+		public void DrawFilledEllipse(int x1, int y1, int x2, int y2, ColorInt c, double p = 6) {
+			int ox = Math.Abs(x2 + x1) / 2;
+			int sx = Math.Abs(x2 - x1) / 2;
+			int oy = Math.Abs(y2 + y1) / 2;
+			int sy = Math.Abs(y2 - y1) / 2;
 
-			for (double i = 0; i < 360; i += 0.05) {
-				int[] loc = GetEllipsePoints(sx, sy, ox, oy, i);
-				SetPixel(loc[0], loc[1], c);
+			for (double i = 0; i < 360; i += 1 / p) {
+				for (int j = 0; j <= sx; j++) {
+					SetPixel((int)Math.Floor(Math.Cos(Math.PI / 180 * i) * j + ox), (int)Math.Floor(Math.Sin(Math.PI / 180 * i) * j * sy / sx + oy), c);
+				}
 			}
 		}
 
-		public void DrawEllipse(int x1, int y1, int x2, int y2, double step, ColorInt c) {
-			int ox = (x2 + x1) / 2;
-			int sx = (x2 - x1) / 2;
-			int oy = (y2 + y1) / 2;
-			int sy = (y2 - y1) / 2;
+		public void DrawPoly(ColorInt c, params int[] p) {
+			int[,] points = new int[(int)Math.Floor((double)p.Length / 2) + 1, 2];
+			int cp = 0, cc = 0;
+			for (int i = 0; i < p.Length; i++) {
+				points[cp, cc] = p[i];
+				cc++;
+				if (cc > 1) {
+					cc = 0;
+					cp++;
+				}
+			}
+			points[points.Length / 2 - 1, 0] = points[0, 0];
+			points[points.Length / 2 - 1, 1] = points[0, 1];
 
-			step = (step > 0) ? 1 / step : 0.05;
-
-			for (double i = 0; i < 360; i += step) {
-				int[] loc = GetEllipsePoints(sx, sy, ox, oy, i);
-				SetPixel(loc[0], loc[1], c);
+			for (int pp = 0; pp < points.Length / 2 - 1; pp++) {
+				DrawLine(points[pp, 0], points[pp, 1], points[pp + 1, 0], points[pp + 1, 1], c);
 			}
 		}
 
-		public void DrawFilledEllipse(int x1, int y1, int x2, int y2, ColorInt c) {
-			int ox = (x2 + x1) / 2;
-			int sx = (x2 - x1) / 2;
-			int oy = (y2 + y1) / 2;
-			int sy = (y2 - y1) / 2;
+		public void DrawFilledPoly(ColorInt c, params int[] p) {
+			int[,] points = new int[(int)Math.Floor((double)p.Length / 2) + 1, 2];
+			int cp = 0, cc = 0, mnx = 0, mxx = 0, mny = 0, mxy = 0, cx = 0, cy = 0;
+			for (int i = 0; i < p.Length; i++) {
+				points[cp, cc] = p[i];
+				cc++;
+				if (cc > 1) {
+					cc = 0;
+					cp++;
+				}
+			}
+			points[points.Length / 2 - 1, 0] = points[0, 0];
+			points[points.Length / 2 - 1, 1] = points[0, 1];
 
-			for (double i = 0; i < 360; i += 0.05) {
-				int[] loc = GetEllipsePoints(sx, sy, ox, oy, i);
-				DrawLine(ox, oy, loc[0], loc[1], c);
+			for (int mp = 0; mp < points.Length / 2 - 1; mp++) {
+				if (points[mp, 0] < mnx) mnx = points[mp, 0];
+				if (points[mp, 0] > mxx) mxx = points[mp, 0];
+				if (points[mp, 1] < mny) mny = points[mp, 1];
+				if (points[mp, 1] > mxy) mxy = points[mp, 1];
+			}
+			cx = (mxx + mnx) / 2;
+			cy = (mxy + mny) / 2;
+
+			for (int pp = 0; pp < points.Length / 2 - 1; pp++) {
+				DrawFilledTriangle(points[pp, 0], points[pp, 1], points[pp + 1, 0], points[pp + 1, 1], cx, cy, c);
 			}
 		}
 
