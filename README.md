@@ -20,7 +20,7 @@ View MyView = new View(1280, 720, 96); // Width, Height, DPI
 ```csharp
 void MainLoop() {
 	// Code to run for each frame
-	MyView.Update(MyImageControl); // Update an Image control
+	this.Dispatcher.Invoke(() => { MyView.Update(MyImageControl); }); // Update an Image control
 	BitmapSource _ = MyView.Output(); // Get image data as a BitmapSource
 }
 
@@ -28,7 +28,11 @@ void MainLoop() {
 Timer FrameTimer = new Timer();
 FrameTimer.Interval = 1000 / 30; // Target 30 FPS
 FrameTimer.Elapsed += new ElapsedEventHandler((object sender, ElapsedEventArgs e) => {
-	this.Dispatcher.Invoke(MainLoop);
+	try{
+		MainLoop();
+	} catch (Exception e) {
+		Console.WriteLine(e);
+	}
 });
 FrameTimer.Start();
 ```
@@ -82,6 +86,24 @@ Draws a filled ellipse from point (x1, y1) to point (x2, y2).
 ```csharp
 MyView.DrawFilledEllipse(0, 0, 500, 300, new ColorInt(0, 0, 255));
 ```
-== TODO ==
+
+### DrawPoly
+Draws a polygon of color c using points (x1, y1, x2, y2, ...).
+```csharp
+MyView.DrawPoly(new ColorInt(0, 0, 255), 100, 200, 300, 150, 0, 150); // Draw a trapezoid
+```
+
+### DrawFilledPoly
+Draws a filled polygon of color c using points (x1, y1, x2, y2, ...).
+```csharp
+MyView.DrawPoly(new ColorInt(0, 0, 255), 100, 200, 300, 150, 0, 150); // Draw a trapezoid
+```
+
+### DrawBitmap
+Draws a bitmap image represented as a `MyCPGBitmapData` at location (x, y).
+```csharp
+MyView.DrawBitmap(2, 2, MyCPGBitmapData);
+```
+
 ## Sprites
 == TODO ==
