@@ -27,7 +27,7 @@ void MainLoop() {
 // Create a timer and run the loop
 Timer FrameTimer = new Timer();
 FrameTimer.Interval = 1000 / 30; // Target 30 FPS
-FrameTimer.Elapsed += new ElapsedEventHandler((object sender, ElapsedEventArgs e) => {
+FrameTimer.Elapsed += new ElapsedEventHandler((object _, ElapsedEventArgs __) => {
 	try{
 		MainLoop();
 	} catch (Exception e) {
