@@ -1,8 +1,8 @@
 ﻿/*
  * Crispycat PixelGraphic Engine
  * CPGEng.Shapes.cs; Library of drawable shapes
- * (C) 2019 crispycat; https://github.com/crispycat0/CPGEng
- * 2019/10/02
+ * (C) 2019 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
+ * 2019/12/17
 */
 
 using System;
@@ -11,10 +11,24 @@ using System.Windows;
 
 namespace CPGEng {
 	public static class Shapes {
+		/// <summary>A line from Pixel a to b.</summary>
+		/// <param name="a">Pixel a</param>
+		/// <param name="b">Pixel b</param>
+		/// <returns>Pixel[]</returns>
 		public static Pixel[] Line(Pixel a, Pixel b) {
 			List<Pixel> pixels = new List<Pixel>();
 
-			int w = (b.X - a.X), h = (b.Y - a.Y), dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0;
+			if (a.X == b.X || a.Y == b.Y) {
+				if (a.X > b.X) { int _ = a.X; a.X = b.X; b.X = _; }
+				if (a.Y > b.Y) { int _ = a.Y; a.Y = b.Y; b.Y = _; }
+
+				if (a.X == b.X) for (int i = a.Y; i <= b.Y; i++) pixels.Add(new Pixel(a.X, i));
+				else for (int i = a.X; i <= b.X; i++) pixels.Add(new Pixel(i, a.Y));
+
+				return pixels.ToArray();
+			}
+
+			int w = b.X - a.X, h = b.Y - a.Y, dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0;
 			if (w < 0) dx1 = -1; else if (w > 0) dx1 = 1;
 			if (h < 0) dy1 = -1; else if (h > 0) dy1 = 1;
 			if (w < 0) dx2 = -1; else if (w > 0) dx2 = 1;
@@ -44,6 +58,10 @@ namespace CPGEng {
 			return pixels.ToArray();
 		}
 
+		/// <summary>A rectangle from Pixel a to b.</summary>
+		/// <param name="a">Pixel a</param>
+		/// <param name="b">Pixel b</param>
+		/// <returns>Pixel[]</returns>
 		public static Pixel[] Rectangle(Pixel a, Pixel b) {
 			List<Pixel> pixels = new List<Pixel>();
 
@@ -58,6 +76,10 @@ namespace CPGEng {
 			return pixels.ToArray();
 		}
 
+		/// <summary>A filled rectangle from Pixel a to b.</summary>
+		/// <param name="a">Pixel a</param>
+		/// <param name="b">Pixel b</param>
+		/// <returns>Pixel[]</returns>
 		public static Pixel[] FilledRectangle(Pixel a, Pixel b) {
 			List<Pixel> pixels = new List<Pixel>();
 
@@ -73,6 +95,11 @@ namespace CPGEng {
 			return pixels.ToArray();
 		}
 
+		/// <summary>A triangle from Pixels a, b and c.</summary>
+		/// <param name="a">Pixel a</param>
+		/// <param name="b">Pixel b</param>
+		/// <param name="c">Pixel c</param>
+		/// <returns>Pixel[]</returns>
 		public static Pixel[] Triangle(Pixel a, Pixel b, Pixel c) {
 			List<Pixel> pixels = new List<Pixel>();
 
@@ -83,6 +110,11 @@ namespace CPGEng {
 			return pixels.ToArray();
 		}
 
+		/// <summary>A filled triangle from Pixels a, b and c.</summary>
+		/// <param name="a">Pixel a</param>
+		/// <param name="b">Pixel b</param>
+		/// <param name="c">Pixel c</param>
+		/// <returns>Pixel[]</returns>
 		public static Pixel[] FilledTriangle(Pixel a, Pixel b, Pixel c) {
 			List<Pixel> pixels = new List<Pixel>();
 
@@ -108,54 +140,102 @@ namespace CPGEng {
 			return pixels.ToArray();
 		}
 
-		private static Pixel[] FancyEllipse(Pixel a, Pixel b, double p) {
-			List<Pixel> pixels = new List<Pixel>();
-
-			int ox = (int)Math.Abs(b.X + a.X) / 2;
-			int sx = (int)Math.Abs(b.X - a.X) / 2;
-			int oy = (int)Math.Abs(b.Y + a.Y) / 2;
-			int sy = (int)Math.Abs(b.Y - a.Y) / 2;
-
-			for (double i = 0; i < 360; i += 1 / p) pixels.Add(new Pixel((int)Math.Floor(Math.Cos(Math.PI * i / 180) * sx + ox), (int)Math.Floor(Math.Sin(Math.PI * i / 180) * sy + oy)));
-
-			return pixels.ToArray();
-		}
-
-		private static Pixel[] FancyFilledEllipse(Pixel a, Pixel b, double p) {
+		/// <summary>An ellipse from Pixel a to b.</summary>
+		/// <param name="a">Pixel a</param>
+		/// <param name="b">Pixel b</param>
+		/// <returns>Pixel[]</returns>
+		public static Pixel[] Ellipse(Pixel a, Pixel b) {
 			List<Pixel> pixels = new List<Pixel>();
 
 			int ox = Math.Abs(b.X + a.X) / 2;
-			int sx = Math.Abs(b.X - a.X) / 2;
+			int rx = Math.Abs(b.X - a.X) / 2;
 			int oy = Math.Abs(b.Y + a.Y) / 2;
-			int sy = Math.Abs(b.Y - a.Y) / 2;
+			int ry = Math.Abs(b.Y - a.Y) / 2;
 
-			for (double i = 0; i < 360; i += 1 / p)
-				for (int j = 0; j <= sx; j++)
-					pixels.Add(new Pixel((int)Math.Floor(Math.Cos(Math.PI * i / 180) * j + ox), (int)Math.Floor(Math.Sin(Math.PI * i / 180) * j * sy / sx + oy)));
+			int txx = 2 * rx * rx, tyy = 2 * ry * ry;
+			int x = rx, y = 0, xc = ry * ry * (1 - 2 * rx), yc = rx * rx, ee = 0, sx = tyy * rx, sy = 0;
+
+			void pp(int X, int Y) {
+				pixels.Add(new Pixel(ox + X, oy + Y));
+				pixels.Add(new Pixel(ox - X, oy + Y));
+				pixels.Add(new Pixel(ox - X, oy - Y));
+				pixels.Add(new Pixel(ox + X, oy - Y));
+			}
+
+			while (sx >= sy) {
+				pp(x, y);
+				y++;
+				sy += txx;
+				ee += yc;
+				yc += txx;
+				if (2 * ee + xc > 0) {
+					x--;
+					sx -= tyy;
+					ee += xc;
+					xc += tyy;
+				}
+			}
+
+			x = 0;
+			y = ry;
+			xc = ry * ry;
+			yc = rx * rx * (1 - 2 * ry);
+			ee = 0;
+			sx = 0;
+			sy = txx * ry;
+
+			while (sx <= sy) {
+				pp(x, y);
+				x++;
+				sx += tyy;
+				ee += xc;
+				xc += tyy;
+				if (2 * ee + yc > 0) {
+					y--;
+					sy -= txx;
+					ee += yc;
+					yc += txx;
+				}
+			}
 
 			return pixels.ToArray();
 		}
 
-		public static Pixel[] Ellipse(Pixel a, Pixel b, DrawingMode d = 0, double p = 0) {
-			if (p == 0) p = (d == DrawingMode.Fancy) ? 3.6 : 0.05;
+		/// <summary>A filled ellipse from Pixel a to b.</summary>
+		/// <param name="a">Pixel a</param>
+		/// <param name="b">Pixel b</param>
+		/// <returns>Pixel[]</returns>
+		public static Pixel[] FilledEllipse(Pixel a, Pixel b) {
 			List<Pixel> pixels = new List<Pixel>();
 
-			if (d == DrawingMode.Fancy) pixels.AddRange(FancyEllipse(a, b, p));
-			else pixels.AddRange(Polygon(FancyEllipse(a, b, p)));
+			int ox = Math.Abs(b.X + a.X) / 2;
+			int rx = Math.Abs(b.X - a.X) / 2;
+			int oy = Math.Abs(b.Y + a.Y) / 2;
+			int ry = Math.Abs(b.Y - a.Y) / 2;
+
+			int tx = rx * rx, ty = ry * ry;
+			int txy = tx * ty, x0 = rx, dx = 0;
+
+			for (int x = -rx; x <= rx; x++) pixels.Add(new Pixel(ox + x, oy));
+
+			for (int y = 1; y <= ry; y++) {
+				int x1 = x0 - (dx - 1);
+				for (; x1 > 0; x1--) if (x1 * x1 * ty + y * y * tx <= txy) break;
+				dx = x0 - x1;
+				x0 = x1;
+
+				for (int x = -x0; x <= x0; x++) {
+					pixels.Add(new Pixel(ox + x, oy - y));
+					pixels.Add(new Pixel(ox + x, oy + y));
+				}
+			}
 
 			return pixels.ToArray();
 		}
 
-		public static Pixel[] FilledEllipse(Pixel a, Pixel b, DrawingMode d = 0, double p = 0) {
-			if (p == 0) p = (d == DrawingMode.Fancy) ? 3.6 : 0.05;
-			List<Pixel> pixels = new List<Pixel>();
-
-			if (d == DrawingMode.Fancy) pixels.AddRange(FancyFilledEllipse(a, b, p));
-			else pixels.AddRange(FilledPolygon(FancyEllipse(a, b, p)));
-
-			return pixels.ToArray();
-		}
-
+		/// <summary>A polygon from Pixels a, b, c...</summary>
+		/// <param name="p">Pixels</param>
+		/// <returns>Pixel[]</returns>
 		public static Pixel[] Polygon(params Pixel[] p) {
 			List<Pixel> pixels = new List<Pixel>();
 
@@ -169,6 +249,9 @@ namespace CPGEng {
 			return pixels.ToArray();
 		}
 
+		/// <summary>A filled polygon from Pixels a, b, c...</summary>
+		/// <param name="p">Pixels</param>
+		/// <returns>Pixel[]</returns>
 		public static Pixel[] FilledPolygon(params Pixel[] p) {
 			List<Pixel> pixels = new List<Pixel>();
 			int nx = int.MaxValue, cx, xx = 0, ny = int.MaxValue, cy, xy = 0;
@@ -219,6 +302,13 @@ namespace CPGEng {
 			return pixels.ToArray();
 		}
 
+		/// <summary>A Bezier curve from Pixels a, b, and c (3 control points).</summary>
+		/// <param name="a">Pixel a</param>
+		/// <param name="b">Pixel b</param>
+		/// <param name="c">Pixel c</param>
+		/// <param name="d">DrawingMode, defaults to Fast</param>
+		/// <param name="p">Precision</param>
+		/// <returns>Pixel[]</returns>
 		public static Pixel[] BezierCurve(Pixel a, Pixel b, Pixel c, DrawingMode d = 0, double p = 0) {
 			if (p == 0) p = (d == DrawingMode.Fancy) ? 800 : 19;
 			List<Pixel> pixels = new List<Pixel>();
@@ -233,6 +323,14 @@ namespace CPGEng {
 			return pixels.ToArray();
 		}
 
+		/// <summary>A Bezier curve from Pixels a, b, c and d (4 control points).</summary>
+		/// <param name="a">Pixel a</param>
+		/// <param name="b">Pixel b</param>
+		/// <param name="c">Pixel c</param>
+		/// <param name="d">Pixel d</param>
+		/// <param name="e">DrawingMode, defaults to Fast</param>
+		/// <param name="p">Precision</param>
+		/// <returns>Pixel[]</returns>
 		public static Pixel[] BezierCurve(Pixel a, Pixel b, Pixel c, Pixel d, DrawingMode e = 0, double p = 0) {
 			if (p == 0) p = (e == DrawingMode.Fancy) ? 800 : 22;
 			List<Pixel> pixels = new List<Pixel>();
