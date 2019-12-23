@@ -1,8 +1,8 @@
 ﻿/*
  * Crispycat PixelGraphic Engine
  * CPGEng.Pixel.cs; Pixel struct
- * (C) 2019 crispycat; https://github.com/crispycat0/CPGEng
- * 2019/10/02
+ * (C) 2019 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
+ * 2019/12/22
 */
 
 using System;
@@ -11,27 +11,40 @@ namespace CPGEng {
 	public struct Pixel {
 		public int X, Y;
 
+		/// <summary>Creates a new Pixel.</summary>
+		/// <param name="x">X</param>
+		/// <param name="y">Y</param>
 		public Pixel(int x = 0, int y = 0) {
 			X = x;
 			Y = y;
 		}
 
+		/// <summary>Add a pixel to this pixel.</summary>
+		/// <returns>Pixel</returns>
 		public Pixel Add(Pixel p) {
 			return new Pixel(X + p.X, Y + p.Y);
 		}
 
+		/// <summary>Subtract a pixel from this pixel.</summary>
+		/// <returns>Pixel</returns>
 		public Pixel Sub(Pixel p) {
 			return new Pixel(X - p.X, Y - p.Y);
 		}
 
+		/// <summary>Multiply this pixel by a pixel.</summary>
+		/// <returns>Pixel</returns>
 		public Pixel Mul(Pixel p) {
 			return new Pixel(X * p.X, Y * p.Y);
 		}
 
+		/// <summary>Divide this pixel by a pixel.</summary>
+		/// <returns>Pixel</returns>
 		public Pixel Div(Pixel p) {
 			return new Pixel(X / p.X, Y / p.Y);
 		}
 
+		/// <summary>Get the remainder of dividing this pixel by a pixel.</summary>
+		/// <returns>Pixel</returns>
 		public Pixel Mod(Pixel p) {
 			return new Pixel(X % p.X, Y % p.Y);
 		}
@@ -58,5 +71,10 @@ namespace CPGEng {
 		public static Pixel operator /(Pixel a, Pixel b) => a.Div(b);
 		public static Pixel operator %(Pixel a, Pixel b) => a.Mod(b);
 
+		public static Pixel operator +(Pixel a, int b) => a.Add(new Pixel(b, b));
+		public static Pixel operator -(Pixel a, int b) => a.Sub(new Pixel(b, b));
+		public static Pixel operator *(Pixel a, int b) => a.Mul(new Pixel(b, b));
+		public static Pixel operator /(Pixel a, int b) => a.Div(new Pixel(b, b));
+		public static Pixel operator %(Pixel a, int b) => a.Mod(new Pixel(b, b));
 	}
 }

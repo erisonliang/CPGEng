@@ -2,49 +2,21 @@
  * Crispycat PixelGraphic Engine
  * CPGEng.Bitmap.cs; Bitmap tools
  * (C) 2019 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
- * 2019/10/07
+ * 2019/12/22
 */
 
 using System;
 using System.Windows.Media.Imaging;
+using CPGEng.Sprites;
 
 namespace CPGEng {
-	public class BitmapData {
-		public readonly int Width, Height, Channels = 4, Stride;
-		public Buffer buffer;
-
-		public BitmapData(int w, int h, Buffer b, int s = 0) {
-			Width = w;
-			Height = h;
-			buffer = b;
-			Stride = (s == 0) ? w * Channels + (w % Channels) : s;
-		}
-
-		public uint PixelLocationInBuffer(Pixel p) {
-			return (uint)(p.X * Channels + p.Y * Stride);
-		}
-
-		public ColorInt Get(Pixel p) {
-			return new ColorInt(
-				buffer.Get(PixelLocationInBuffer(p)),
-				buffer.Get(PixelLocationInBuffer(p) + 1),
-				buffer.Get(PixelLocationInBuffer(p) + 2)
-			);
-		}
-
-		public void Draw(Pixel p, ColorInt c) {
-			buffer.Set(PixelLocationInBuffer(p), (byte)c.Blue);
-			buffer.Set(PixelLocationInBuffer(p) + 1, (byte)c.Green);
-			buffer.Set(PixelLocationInBuffer(p) + 2, (byte)c.Red);
-			buffer.Set(PixelLocationInBuffer(p) + 3, 255);
-		}
-
-		public BitmapSource ToBitmapSource() {
-			return BitmapSource.Create(Width, Height, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null, buffer.Data(), Stride);
-		}
-	}
-
 	public static class Bitmap {
+		/// <summary>Returns a BitmapData created from the image at the path specified.</summary>
+		/// <param name="path">Path to image</param>
+		/// <param name="w">Width of the image</param>
+		/// <param name="h">Height of the image</param>
+		/// <returns>BitmapSource</returns>
+		/// <seealso cref="FromView(View)"/>
 		public static BitmapData Import(string path, int w = 256, int h = 256) {
 			BitmapImage img = new BitmapImage();
 			img.BeginInit();
@@ -59,17 +31,43 @@ namespace CPGEng {
 			return new BitmapData(w, h, new Buffer(data), w * 4);
 		}
 
+		/// <summary>Returns a BitmapData created from the View specified.</summary>
+		/// <param name="v">View</param>
+		/// <returns>BitmapData</returns>
+		/// <seealso cref="Import(string, int, int)"/>
 		public static BitmapData FromView(View v) {
 			return new BitmapData((int)v.Width, (int)v.Height, v.buffer, (int)v.Stride);
 		}
 
+		/// <summary>Returns a BitmapData created from the SpritedView specified.</summary>
+		/// <param name="v">SpritedView</param>
+		/// <returns>BitmapData</returns>
+		/// <seealso cref="Import(string, int, int)"/>
+		public static BitmapData FromView(SpritedView v) {
+			BitmapData bm = new BitmapData((int)v.Width, (int)v.Height, v.buffer, (int)v.Stride);
+
+			foreach (Sprite sprite in v.Sprites.ToArray()) {
+				foreach (Pixel x in sprite.TextureMask) bm.Draw(x + sprite.Position, new ColorInt(
+					sprite.Texture.buffer.Get(v.PixelLocationInBuffer(x, (uint)sprite.Texture.Channels, (uint)sprite.Texture.Stride) % sprite.Texture.buffer.Length),
+					sprite.Texture.buffer.Get(v.PixelLocationInBuffer(x, (uint)sprite.Texture.Channels, (uint)sprite.Texture.Stride) % sprite.Texture.buffer.Length + 1),
+					sprite.Texture.buffer.Get(v.PixelLocationInBuffer(x, (uint)sprite.Texture.Channels, (uint)sprite.Texture.Stride) % sprite.Texture.buffer.Length + 2)
+				));
+			}
+
+			return bm;
+		}
+
+		/// <summary>Returns a scaled version of the BitmapData specified.</summary>
+		/// <param name="b">BitmapData</param>
+		/// <param name="w">New width</param>
+		/// <param name="h">New height</param>
+		/// <param name="m">ScalingMode, defaults to NearestNeighbor</param>
+		/// <returns>BitmapData</returns>
 		public static BitmapData Resize(BitmapData b, int w, int h, ScalingMode m = 0) {
 			BitmapData nb = new BitmapData(w, h, new Buffer((uint)(w * h * 4)), w * 4);
 
 			if (m == ScalingMode.Bilinear) {
 				if (w == 0 || h == 0) return b;
-				double rx = w / b.Width;
-				double ry = h / b.Height;
 
 				for (int x = 0; x < w; x++) {
 					for (int y = 0; y < h; y++) {
