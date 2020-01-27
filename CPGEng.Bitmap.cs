@@ -1,8 +1,8 @@
 ﻿/*
  * Crispycat PixelGraphic Engine
  * CPGEng.Bitmap.cs; Bitmap tools
- * (C) 2019 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
- * 2019/12/22
+ * (C) 2020 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
+ * 2020/01/27
 */
 
 using System;
@@ -44,7 +44,7 @@ namespace CPGEng {
 		/// <returns>BitmapData</returns>
 		/// <seealso cref="Import(string, int, int)"/>
 		public static BitmapData FromView(SpritedView v) {
-			BitmapData bm = new BitmapData((int)v.Width, (int)v.Height, v.buffer, (int)v.Stride);
+			BitmapData bm = new BitmapData((int)v.Width, (int)v.Height, new Buffer(v.buffer), (int)v.Stride);
 
 			foreach (Sprite sprite in v.Sprites.ToArray()) {
 				foreach (Pixel x in sprite.TextureMask) bm.Draw(x + sprite.Position, new ColorInt(

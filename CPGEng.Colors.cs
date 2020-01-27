@@ -1,8 +1,8 @@
 ﻿/*
  * Crispycat PixelGraphic Engine
  * CPGEng.Colors.cs; Colors library and color functions
- * (C) 2019 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
- * 2019/12/22
+ * (C) 2020 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
+ * 2020/01/27
 */
 
 using System;
@@ -139,9 +139,33 @@ namespace CPGEng {
 			}
 		}
 
+		/// <summary>Converts a ColorInt to grayscale.</summary>
+		/// <param name="c">ColorInt c</param>
+		/// <returns>ColorInt</returns>
 		public static ColorInt ToGrayscale(ColorInt c) {
+			int v = (int)Math.Round((double)(c.Red + c.Green + c.Blue) / 3);
+			return new ColorInt(v, v, v);
+		}
+
+		/// <summary>Converts a ColorInt to grayscale with luminance optimizations.</summary>
+		/// <param name="c">ColorInt c</param>
+		/// <returns>ColorInt</returns>
+		public static ColorInt ToOptimizedGrayscale(ColorInt c) {
 			int v = (int)Math.Round(c.Red * 0.299 + c.Green * 0.587 + c.Blue * 0.114);
 			return new ColorInt(v, v, v);
+		}
+
+		/// <summary>Returns a random ColorInt.</summary>
+		/// <returns>ColorInt</returns>
+		public static ColorInt Random() {
+			return new ColorInt(new Random().Next(16777216));
+		}
+
+		/// <summary>Returns a random ColorInt from the specified seed.</summary>
+		/// <param name="s">int Seed</param>
+		/// <returns>ColorInt</returns>
+		public static ColorInt Random(int s) {
+			return new ColorInt(new Random(s).Next(16777216));
 		}
 	}
 }

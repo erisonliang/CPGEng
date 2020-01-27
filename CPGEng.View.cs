@@ -1,8 +1,8 @@
 ﻿/*
  * Crispycat PixelGraphic Engine
  * CPGEng.View.cs; View objects and functions
- * (C) 2019 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
- * 2019/12/22
+ * (C) 2020 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
+ * 2020/01/27
 */
 
 using System.Windows.Media.Imaging;

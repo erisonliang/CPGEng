@@ -1,8 +1,8 @@
 ﻿/*
  * Crispycat PixelGraphic Engine
  * CPGEng.Buffer.cs; Buffer objects and functions
- * (C) 2019 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
- * 2019/12/22
+ * (C) 2020 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
+ * 2020/01/27
 */
 
 namespace CPGEng {
@@ -19,11 +19,18 @@ namespace CPGEng {
 			if (v > 0) for (int b = 0; b < l; b++) data[b] = v;
 		}
 
-		/// <summary>Create a buffer from a byte[]</summary>
+		/// <summary>Create a Buffer from a byte[]</summary>
 		/// <param name="d">Byte[] data</param>
 		public Buffer(byte[] d) {
 			data = d;
 			Length = (uint)d.Length;
+		}
+
+		/// <summary>Create a Buffer from another Buffer</summary>
+		/// <param name="b">Buffer buffer</param>
+		public Buffer(Buffer b) {
+			data = (byte[])b.data.Clone();
+			Length = b.Length;
 		}
 
 		/// <summary>Get byte</summary>
