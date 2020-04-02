@@ -1,8 +1,8 @@
 ﻿/*
- * Crispycat PixelGraphic Engine
- * CPGEng.BitmapData.cs; BitmapData objects and functions
- * (C) 2020 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
- * 2020/01/27
+* Crispycat PixelGraphic Engine
+* CPGEng.BitmapData.cs; BitmapData objects and functions
+* (C) 2020 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
+* 2020/04/01
 */
 
 using System.Windows.Media.Imaging;
@@ -15,14 +15,25 @@ namespace CPGEng {
 		/// <summary>Creates a new BitmapData.</summary>
 		/// <param name="w">Width</param>
 		/// <param name="h">Height</param>
-		/// <param name="b">Data buffer</param>
-		/// <param name="s">Stride, not necessary to use</param>
 		/// <seealso cref="View"/>
-		public BitmapData(int w, int h, Buffer b, int s = 0) {
+		public BitmapData(int w, int h) {
+			Width = w;
+			Height = h;
+			Stride = w * Channels + (w % Channels);
+			buffer = new Buffer((uint)(Height * Stride));
+		}
+
+		/// <summary>Creates a new BitmapData.</summary>
+		/// <param name="w">Width</param>
+		/// <param name="h">Height</param>
+		/// <param name="b">Data buffer</param>
+		/// <param name="s">Stride</param>
+		/// <seealso cref="View"/>
+		public BitmapData(int w, int h, Buffer b, int s) {
 			Width = w;
 			Height = h;
 			buffer = b;
-			Stride = (s == 0) ? w * Channels + (w % Channels) : s;
+			Stride = s;
 		}
 
 		public uint PixelLocationInBuffer(Pixel p) {

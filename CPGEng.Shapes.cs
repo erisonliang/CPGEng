@@ -1,8 +1,8 @@
 ﻿/*
- * Crispycat PixelGraphic Engine
- * CPGEng.Shapes.cs; Library of drawable shapes
- * (C) 2020 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
- * 2020/01/27
+* Crispycat PixelGraphic Engine
+* CPGEng.Shapes.cs; Library of drawable shapes
+* (C) 2020 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
+* 2020/04/01
 */
 
 using System;

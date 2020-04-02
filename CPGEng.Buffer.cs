@@ -1,8 +1,8 @@
 ﻿/*
- * Crispycat PixelGraphic Engine
- * CPGEng.Buffer.cs; Buffer objects and functions
- * (C) 2020 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
- * 2020/01/27
+* Crispycat PixelGraphic Engine
+* CPGEng.Buffer.cs; Buffer objects and functions
+* (C) 2020 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
+* 2020/04/01
 */
 
 namespace CPGEng {

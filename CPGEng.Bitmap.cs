@@ -1,8 +1,8 @@
 ﻿/*
- * Crispycat PixelGraphic Engine
- * CPGEng.Bitmap.cs; Bitmap tools
- * (C) 2020 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
- * 2020/01/27
+* Crispycat PixelGraphic Engine
+* CPGEng.Bitmap.cs; Bitmap tools
+* (C) 2020 crispycat; https://github.com/crispycat0/CPGEng/LICENSE
+* 2020/04/01
 */
 
 using System;
@@ -36,7 +36,7 @@ namespace CPGEng {
 		/// <returns>BitmapData</returns>
 		/// <seealso cref="Import(string, int, int)"/>
 		public static BitmapData FromView(View v) {
-			return new BitmapData((int)v.Width, (int)v.Height, v.buffer, (int)v.Stride);
+			return new BitmapData((int)v.Width, (int)v.Height, new Buffer(v.buffer), (int)v.Stride);
 		}
 
 		/// <summary>Returns a BitmapData created from the SpritedView specified.</summary>
@@ -64,7 +64,7 @@ namespace CPGEng {
 		/// <param name="m">ScalingMode, defaults to NearestNeighbor</param>
 		/// <returns>BitmapData</returns>
 		public static BitmapData Resize(BitmapData b, int w, int h, ScalingMode m = 0) {
-			BitmapData nb = new BitmapData(w, h, new Buffer((uint)(w * h * 4)), w * 4);
+			BitmapData nb = new BitmapData(w, h);
 
 			if (m == ScalingMode.Bilinear) {
 				if (w == 0 || h == 0) return b;
@@ -103,6 +103,71 @@ namespace CPGEng {
 						nb.Draw(new Pixel(j, i), b.Get(new Pixel((int)px, (int)py)));
 					}
 				}
+			}
+
+			return nb;
+		}
+
+		/// <summary>Returns a flipped version of the BitmapData specified.</summary>
+		/// <param name="b">BitmapData</param>
+		/// <param name="f">FlipType</param>
+		/// <returns>BitmapData</returns>
+		public static BitmapData Flip(BitmapData b, FlipType f) {
+			BitmapData nb = new BitmapData(b.Width, b.Height);
+			
+			switch (f) {
+				case FlipType.X:
+					for (int x = 0; x < nb.Width; x++)
+						for (int y = 0; y < nb.Height; y++)
+							nb.Draw(new Pixel(x, y), b.Get(new Pixel(b.Width - x - 1, y)));
+					break;
+				case FlipType.Y:
+					for (int x = 0; x < nb.Width; x++)
+						for (int y = 0; y < nb.Height; y++)
+							nb.Draw(new Pixel(x, y), b.Get(new Pixel(x, b.Height - y - 1)));
+					break;
+				case FlipType.XY:
+					for (int x = 0; x < nb.Width; x++)
+						for (int y = 0; y < nb.Height; y++)
+							nb.Draw(new Pixel(x, y), b.Get(new Pixel(b.Width - x - 1, b.Height - y - 1)));
+					break;
+				default:
+					nb = new BitmapData(b.Width, b.Height, b.buffer, b.Stride);
+					break;
+			}
+
+			return nb;
+		}
+
+		/// <summary>Returns a flipped version of the BitmapData specified.</summary>
+		/// <param name="b">BitmapData</param>
+		/// <param name="r">int Rotation (pi/2 rad, 90 deg, quarter turn increments)</param>
+		/// <returns>BitmapData</returns>
+		public static BitmapData Rotate(BitmapData b, int r) {
+			BitmapData nb;
+			r %= 4;
+
+			switch (r) {
+				case 1:
+					nb = new BitmapData(b.Height, b.Width);
+					for (int x = 0; x < nb.Width; x++)
+						for (int y = 0; y < nb.Height; y++)
+							nb.Draw(new Pixel(x, y), b.Get(new Pixel(y, b.Height - x - 1)));
+					break;
+				case 2:
+					nb = new BitmapData(b.Width, b.Height);
+					for (int x = 0; x < nb.Width; x++)
+						for (int y = 0; y < nb.Height; y++)
+							nb.Draw(new Pixel(x, y), b.Get(new Pixel(b.Width - x - 1, b.Height - y - 1)));
+					break;
+				case 3:
+					nb = new BitmapData(b.Height, b.Width);
+					for (int x = 0; x < nb.Width; x++)
+						for (int y = 0; y < nb.Height; y++)
+							nb.Draw(new Pixel(x, y), b.Get(new Pixel(b.Width - y - 1, x)));
+					break;
+				default:
+					return new BitmapData(b.Width, b.Height, b.buffer, b.Stride);
 			}
 
 			return nb;
